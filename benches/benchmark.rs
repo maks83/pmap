@@ -2,7 +2,7 @@ use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use pmap::pmap;
 
 #[inline]
-pub fn sample_fun(s: &String) -> md5::Digest {
+pub fn sample_fun(s: String) -> md5::Digest {
     md5::compute(s.as_bytes())
 }
 
@@ -25,12 +25,12 @@ pub fn random_data(size: usize, el_size: usize) -> Vec<String> {
 }
 
 #[inline]
-pub fn baseline_bench(data: &Vec<String>) {
-    data.iter().map(sample_fun).for_each(drop);
+pub fn baseline_bench(mut data: Vec<String>) {
+    data.drain(..).map(sample_fun).for_each(drop);
 }
 
 #[inline]
-pub fn pmap_bench<const N: usize>(data: &Vec<String>) {
+pub fn pmap_bench<const N: usize>(data: Vec<String>) {
     pmap::<_, _, N>(data, sample_fun);
 }
 
@@ -43,15 +43,14 @@ pub fn criterion_benchmark(c: &mut Criterion) {
         .expect("err init rayon thread pool");
     log::info!("rayon threads: {}", rayon::current_num_threads());
 
-    c.bench_function("baseline", |b| b.iter(|| baseline_bench(black_box(&data))));
-    c.bench_function("pmap 256", |b| b.iter(|| pmap_bench::<256>(black_box(&data))));
-    c.bench_function("pmap 512", |b| b.iter(|| pmap_bench::<512>(black_box(&data))));
-    c.bench_function("pmap 1024", |b| b.iter(|| pmap_bench::<1024>(black_box(&data))));
-    c.bench_function("pmap 2048", |b| b.iter(|| pmap_bench::<2048>(black_box(&data))));
-    c.bench_function("pmap 4096", |b| b.iter(|| pmap_bench::<4096>(black_box(&data))));
-    c.bench_function("pmap 8192", |b| b.iter(|| pmap_bench::<8192>(black_box(&data))));
-    c.bench_function("pmap 16384", |b| b.iter(|| pmap_bench::<16384>(black_box(&data))));
-    c.bench_function("pmap 32768", |b| b.iter(|| pmap_bench::<32768>(black_box(&data))));
+    c.bench_function("baseline", |b| b.iter(|| baseline_bench(black_box(data.clone()))));
+    c.bench_function("pmap 512", |b| b.iter(|| pmap_bench::<512>(black_box(data.clone()))));
+    c.bench_function("pmap 1024", |b| b.iter(|| pmap_bench::<1024>(black_box(data.clone()))));
+    c.bench_function("pmap 2048", |b| b.iter(|| pmap_bench::<2048>(black_box(data.clone()))));
+    c.bench_function("pmap 4096", |b| b.iter(|| pmap_bench::<4096>(black_box(data.clone()))));
+    c.bench_function("pmap 8192", |b| b.iter(|| pmap_bench::<8192>(black_box(data.clone()))));
+    c.bench_function("pmap 16384", |b| b.iter(|| pmap_bench::<16384>(black_box(data.clone()))));
+    c.bench_function("pmap 32768", |b| b.iter(|| pmap_bench::<32768>(black_box(data.clone()))));
 }
 
 criterion_group!(benches, criterion_benchmark);

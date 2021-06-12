@@ -7,8 +7,8 @@ fn test() {
     rayon::ThreadPoolBuilder::default().build_global().expect("err init rayon");
     log::info!("rayon threads: {}", rayon::current_num_threads());
 
-    let r1 = default_impl(&sample_data, sample_fun);
-    let r2 = pmap::<_, _, 32344>(&sample_data, sample_fun);
+    let r1 = default_impl(sample_data.clone(), sample_fun);
+    let r2 = pmap::<_, _, 32344>(sample_data.clone(), sample_fun);
     assert_eq!(r1.len(), sample_data.len());
     assert_eq!(r2.len(), r1.len());
     for ix in 0..sample_data.len() {
@@ -16,12 +16,12 @@ fn test() {
     }
 }
 
-pub fn default_impl<T, R>(input: &Vec<T>, mapf: fn(&T) -> R) -> Vec<R> {
-    input.iter().map(mapf).collect()
+pub fn default_impl<T, R>(mut input: Vec<T>, mapf: fn(T) -> R) -> Vec<R> {
+    input.drain(..).map(mapf).collect()
 }
 
 #[inline]
-pub fn sample_fun(s: &String) -> md5::Digest {
+pub fn sample_fun(s: String) -> md5::Digest {
     md5::compute(s.as_bytes())
 }
 

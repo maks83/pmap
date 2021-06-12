@@ -1,5 +1,4 @@
 use crossbeam_utils::CachePadded;
-use arrayvec::ArrayVec;
 use std::{cell::UnsafeCell, mem::MaybeUninit};
 
 #[derive(Debug, Clone, Copy)]
@@ -11,7 +10,7 @@ pub struct UnsafeChunk<T, const N: usize> (UnsafeCell<Chunk<MaybeUninit<T>, N>>)
 #[derive(Debug, Clone)]
 pub struct ChunkedVec<T, const CHUNK_SIZE: usize> {
     chunks: Vec<Chunk<T, CHUNK_SIZE>>,
-    remainder: ArrayVec<T, CHUNK_SIZE>,
+    remainder: Vec<T>,
 }
 
 unsafe impl<T, const N: usize> Sync for UnsafeChunk<T, N> {}
@@ -31,7 +30,7 @@ impl<T, const N: usize> Default for UnsafeChunk<T, N> {
 }
 
 impl<T, const CHUNK_SIZE: usize> ChunkedVec<T, CHUNK_SIZE> {
-    pub fn new(chunks: Vec<Chunk<T, CHUNK_SIZE>>, remainder: ArrayVec<T, CHUNK_SIZE>) -> Self {
+    pub fn new(chunks: Vec<Chunk<T, CHUNK_SIZE>>, remainder: Vec<T>) -> Self {
         ChunkedVec { chunks, remainder }
     }
 

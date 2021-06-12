@@ -1,47 +1,37 @@
 use super::chunk::{ChunkedVec, Chunk, UnsafeChunk};
-use arrayvec::ArrayVec;
 use std::mem::{transmute, MaybeUninit};
 use rayon;
 
-pub fn pmap<T: Sync, R: Send, const TH: usize>(input: &Vec<T>, mapf: fn(&T) -> R) -> ChunkedVec<R, TH> {
-    let (input_chunks, input_remainder) = input.as_chunks::<TH>();
-    let mut remainder = ArrayVec::new();
-    if !input_chunks.is_empty() {
-        let mut chunks: Vec<UnsafeChunk<R, TH>> = Vec::with_capacity(input_chunks.len());
-        for _ in 0..input_chunks.len() {
+pub fn pmap<T: Send, R: Send, const TH: usize>(input: Vec<T>, mapf: fn(T) -> R) -> ChunkedVec<R, TH> {
+    let chunks_count = input.len() / TH;
+    let mut chunks: Vec<UnsafeChunk<R, TH>> = Vec::with_capacity(chunks_count);
+    let remainder = rayon::scope(|s| {
+        let mut input = input;
+        let mut remainder = Vec::split_off(&mut input, chunks_count * TH);
+        for _ in 0..chunks_count {
             chunks.push(UnsafeChunk::default());
         }
-        rayon::scope(|s| {
-            for (ix, ichunk) in input_chunks.iter().enumerate() {
-                let ochunk = &chunks[ix];
-                s.spawn(move |_| {
-                    unsafe {
-                        map_chunk(ichunk, mapf, ochunk.get_mut());
-                    }
-                });
-            }
-            for el in input_remainder {
+        for ix in 0..chunks_count {
+            let rest = Vec::split_off(&mut input, TH);
+            let ichunk = input;
+            let ochunk = &chunks[ix];
+            input = rest;
+            s.spawn(move |_| {
                 unsafe {
-                    remainder.push_unchecked(mapf(el));
+                    map_chunk(ichunk, mapf, ochunk.get_mut());
                 }
-            }
-        });
-        let chunks = unsafe {
-            transmute::<_, Vec<Chunk<R, TH>>>(chunks)
-        };
-        ChunkedVec::new(chunks, remainder)
-    } else {
-        for el in input_remainder {
-            unsafe {
-                remainder.push_unchecked(mapf(el));
-            }
+            });
         }
-        ChunkedVec::new(Vec::default(), remainder)
-    }
+        remainder.drain(..).map(mapf).collect()
+    });
+    let chunks = unsafe {
+        transmute::<_, Vec<Chunk<R, TH>>>(chunks)
+    };
+    ChunkedVec::new(chunks, remainder)
 }
 
-fn map_chunk<T, R, const TH: usize>(input: &[T; TH], mapf: fn(&T) -> R, output: &mut Chunk<MaybeUninit<R>, TH>) {
-    for (ix, el) in input.iter().enumerate() {
+fn map_chunk<T, R, const TH: usize>(mut input: Vec<T>, mapf: fn(T) -> R, output: &mut Chunk<MaybeUninit<R>, TH>) {
+    for (ix, el) in input.drain(..).enumerate() {
         let r = mapf(el);
         output[ix].write(r);
     }
