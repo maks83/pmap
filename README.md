@@ -7,12 +7,14 @@ Spec: MBA 1.2Ghz 4-core i5 (rayon threads: 4)
 RUST_LOG=info cargo bench:
 
 ```
-baseline                time:   [926.94 ms 938.35 ms 950.81 ms]
-pmap 1024               time:   [391.82 ms 399.31 ms 407.63 ms]
-pmap 2048               time:   [388.70 ms 392.06 ms 395.75 ms]
-pmap 4096               time:   [390.24 ms 395.48 ms 401.48 ms]  
-pmap 8192               time:   [400.83 ms 408.76 ms 418.40 ms]     
-pmap 16384              time:   [426.17 ms 434.10 ms 443.49 ms]        
-pmap 32768              time:   [425.76 ms 433.50 ms 441.80 ms]       
+baseline                time:   [930.39 ms 938.00 ms 947.37 ms] 
+pmap 256                time:   [354.57 ms 355.93 ms 357.36 ms]
+pmap 512                time:   [379.67 ms 388.59 ms 399.59 ms]    
+pmap 1024               time:   [362.59 ms 365.80 ms 369.55 ms]  
+pmap 2048               time:   [377.31 ms 383.55 ms 390.78 ms]   
+pmap 4096               time:   [401.23 ms 407.32 ms 414.41 ms]  
+pmap 8192               time:   [426.99 ms 436.69 ms 448.63 ms]     
+pmap 16384              time:   [463.65 ms 469.38 ms 475.97 ms]     
+pmap 32768              time:   [478.92 ms 489.91 ms 501.99 ms]          
 
 ```
