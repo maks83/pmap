@@ -44,9 +44,12 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     log::info!("rayon threads: {}", rayon::current_num_threads());
 
     c.bench_function("baseline", |b| b.iter(|| baseline_bench(black_box(&data))));
-    c.bench_function("pmap 8096", |b| b.iter(|| pmap_bench::<8096>(black_box(&data))));
-    c.bench_function("pmap 16192", |b| b.iter(|| pmap_bench::<16192>(black_box(&data))));
-    c.bench_function("pmap 32384", |b| b.iter(|| pmap_bench::<32384>(black_box(&data))));
+    c.bench_function("pmap 1024", |b| b.iter(|| pmap_bench::<4096>(black_box(&data))));
+    c.bench_function("pmap 2048", |b| b.iter(|| pmap_bench::<4096>(black_box(&data))));
+    c.bench_function("pmap 4096", |b| b.iter(|| pmap_bench::<4096>(black_box(&data))));
+    c.bench_function("pmap 8192", |b| b.iter(|| pmap_bench::<8192>(black_box(&data))));
+    c.bench_function("pmap 16384", |b| b.iter(|| pmap_bench::<16384>(black_box(&data))));
+    c.bench_function("pmap 32768", |b| b.iter(|| pmap_bench::<32768>(black_box(&data))));
 }
 
 criterion_group!(benches, criterion_benchmark);
